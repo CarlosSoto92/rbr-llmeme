@@ -243,6 +243,18 @@ async function runTestSuite() {
     console.error('❌ [Fail-Safe 7] FAILED: Captions or forbidden keys leaked into public response:', sampleRes);
   }
 
+  // Test 3.8: Original AI Mode Fallback Gate
+  total++;
+  const { planOriginalAiMeme, isImageApiAvailable } = await import('../src/original-meme.js');
+  const originalRes = await planOriginalAiMeme('Construimos doce microservicios para tres usuarios.');
+  assertNoForbiddenKeys(originalRes, 'Original AI Fallback Public');
+  if (originalRes && (originalRes.type === 'image' || originalRes.type === 'emoji')) {
+    console.log(`✅ [Fail-Safe 8] Original AI Mode gated & failover verified (isImageApiAvailable=${isImageApiAvailable()})`);
+    passed++;
+  } else {
+    console.error('❌ [Fail-Safe 8] FAILED: Original AI failover:', originalRes);
+  }
+
   // --- FINAL SUMMARY & EXIT CODE CALCULATION ---
   const percentage = total === 0 ? 0 : Math.round((passed / total) * 100);
   console.log('\n====================================================');

@@ -141,6 +141,40 @@ function renderBotEmojiInContainer(container, emojiChar) {
   container.appendChild(emojiDiv);
 }
 
+let currentMode = 'classic';
+const modeSelector = document.getElementById('modeSelector');
+const modeClassicBtn = document.getElementById('modeClassicBtn');
+const modeOriginalBtn = document.getElementById('modeOriginalBtn');
+
+// Load Server Feature Flags
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const config = await res.json();
+      if (config.enableOriginalAi && modeSelector) {
+        modeSelector.style.display = 'inline-flex';
+      }
+    }
+  } catch (e) {
+    // Keep mode selector hidden
+  }
+}
+
+if (modeClassicBtn && modeOriginalBtn) {
+  modeClassicBtn.addEventListener('click', () => {
+    currentMode = 'classic';
+    modeClassicBtn.classList.add('active');
+    modeOriginalBtn.classList.remove('active');
+  });
+
+  modeOriginalBtn.addEventListener('click', () => {
+    currentMode = 'original';
+    modeOriginalBtn.classList.add('active');
+    modeClassicBtn.classList.remove('active');
+  });
+}
+
 // Main Send Pipeline
 async function handleSend(message) {
   const cleanMessage = (message || '').trim();
@@ -159,7 +193,10 @@ async function handleSend(message) {
     const res = await fetch('/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: cleanMessage })
+      body: JSON.stringify({
+        message: cleanMessage,
+        mode: currentMode
+      })
     });
 
     removeVisualLoader();
@@ -206,5 +243,6 @@ quickPrompts.addEventListener('click', (e) => {
   }
 });
 
-// Focus on load
+// Init
+loadConfig();
 userInput.focus();

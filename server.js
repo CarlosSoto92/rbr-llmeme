@@ -79,6 +79,13 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
+  // API: GET /api/config
+  if (req.method === 'GET' && req.url === '/api/config') {
+    return sendJson(res, 200, {
+      enableOriginalAi: process.env.ENABLE_ORIGINAL_AI === 'true'
+    });
+  }
+
   // API: GET /api/templates
   if (req.method === 'GET' && req.url === '/api/templates') {
     return sendJson(res, 200, { templates: Object.values(MEME_TEMPLATES) });
@@ -95,14 +102,23 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         let userMessage = '';
+        let mode = 'classic';
         try {
           const parsed = JSON.parse(body || '{}');
           userMessage = parsed.message || '';
+          mode = parsed.mode || 'classic';
         } catch {
           userMessage = '';
         }
 
-        const botResponse = await planMemeResponse(userMessage);
+        let botResponse;
+        if (mode === 'original') {
+          const { planOriginalAiMeme } = await import('./src/original-meme.js');
+          botResponse = await planOriginalAiMeme(userMessage);
+        } else {
+          botResponse = await planMemeResponse(userMessage);
+        }
+
         return sendJson(res, 200, botResponse);
       } catch (err) {
         console.error('[server] Error handling /chat:', err.message);
