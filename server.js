@@ -86,6 +86,29 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // API: GET /api/meme-composite
+  if (req.method === 'GET' && req.url.startsWith('/api/meme-composite')) {
+    try {
+      const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+      const img = parsedUrl.searchParams.get('img') || '';
+      const top = parsedUrl.searchParams.get('top') || '';
+      const bottom = parsedUrl.searchParams.get('bottom') || '';
+
+      const { buildCompositeMemeSvg } = await import('./src/image-gen.js');
+      const svg = buildCompositeMemeSvg(img, top, bottom);
+
+      res.writeHead(200, {
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400',
+        'Access-Control-Allow-Origin': '*'
+      });
+      return res.end(svg);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end('SVG error');
+    }
+  }
+
   // API: GET /api/templates
   if (req.method === 'GET' && req.url === '/api/templates') {
     return sendJson(res, 200, { templates: Object.values(MEME_TEMPLATES) });
