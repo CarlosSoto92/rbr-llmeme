@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLMeme — Because the M stands for MEMES</title>
+  <meta name="description" content="Chatbot que responde exclusivamente mediante memes, stickers y emoticones.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-badge">🔥</div>
+        <div class="brand-text">
+          <h1>LLMeme</h1>
+          <p class="tagline">Because the <span>M</span> stands for MEMES</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">100% Text-Free Bot</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- Main Chat Window -->
+    <main class="chat-viewport" id="chatViewport">
+      <div class="messages-list" id="messagesList">
+        <!-- Initial Bot Greeting (Visual Only) -->
+        <div class="message-row bot-row" id="initialGreeting">
+          <div class="avatar bot-avatar">🤖</div>
+          <div class="bubble bot-bubble">
+            <div class="emoji-response">😎🤙</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Quick Test Bar for Judges -->
+    <section class="quick-prompts-bar">
+      <div class="quick-prompts-header">
+        <span class="quick-label">⚡ Hackathon Test Cases (1-Click):</span>
+      </div>
+      <div class="prompts-scroll" id="quickPrompts">
+        <button class="prompt-chip" data-prompt="Mi deploy falló cinco minutos antes de la demo.">💥 Deploy pre-demo</button>
+        <button class="prompt-chip" data-prompt="Subí directo a producción sin tests y ahora no funciona nada.">⚡ Prod sin tests</button>
+        <button class="prompt-chip" data-prompt="Mi jefe quiere que terminemos hoy algo que tarda dos semanas.">⏳ 2 semanas en 1 día</button>
+        <button class="prompt-chip" data-prompt="La entrega vence hoy pero quiero probar un nuevo framework.">👀 Vence hoy vs Nuevo framework</button>
+        <button class="prompt-chip" data-prompt="No hice backup y borré producción.">🗑️ Borré producción</button>
+        <button class="prompt-chip" data-prompt="Por fin logré arreglar ese bug imposible.">🐕 Arreglé bug imposible</button>
+        <button class="prompt-chip" data-prompt="Estoy harto, el login falla otra vez.">🔥 Login falla otra vez</button>
+        <button class="prompt-chip" data-prompt="¿Documentar el proyecto o confiar en mi memoria?">😰 Documentar vs Memoria</button>
+        <button class="prompt-chip" data-prompt="Le añadimos Kubernetes a una landing con tres usuarios.">🧠 K8s para 3 usuarios</button>
+        <button class="prompt-chip" data-prompt="¿Debería trabajar o seguir viendo memes?">🛌 ¿Trabajar o memes?</button>
+        <button class="prompt-chip" data-prompt="Mi cliente quiere otros diez cambios gratis.">💸 10 cambios gratis</button>
+        <button class="prompt-chip" data-prompt="Aprendí Kubernetes para publicar un HTML.">🧠 K8s para HTML</button>
+        <button class="prompt-chip" data-prompt="Ignoré todos los warnings y ahora no funciona.">⚡ Ignoré warnings</button>
+        <button class="prompt-chip" data-prompt="Tengo una reunión que pudo ser un email.">☕ Reunión vs Email</button>
+        <button class="prompt-chip" data-prompt="Creo que esta vez sí voy a dormir temprano.">😴 Dormir temprano</button>
+        <button class="prompt-chip" data-prompt="¿Qué opinas de usar Excel como base de datos?">📊 Excel como DB</button>
+      </div>
+    </section>
+
+    <!-- Input Footer -->
+    <footer class="app-footer">
+      <form class="input-form" id="chatForm">
+        <input
+          type="text"
+          id="userInput"
+          class="chat-input"
+          placeholder="Escribe tu tragedia de código o pregunta..."
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="send-button" id="sendBtn" title="Enviar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </form>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
