@@ -51,12 +51,19 @@ export function sanitizeForMemegen(text) {
     .replace(/%20/g, '_');
 }
 
+const MEMEGEN_KEY_MAP = {
+  'two-buttons': 'ds',        // Daily Struggle (Two Buttons)
+  'brain': 'gb',              // Galaxy Brain (Expanding Brain)
+  'pikachu': 'disastergirl'   // Consequence / surprise / disaster
+};
+
 /**
  * Constructs a valid Memegen image URL
  */
 export function buildMemeUrl(templateId, topText, bottomText, extension = 'png') {
   const cleanTemplate = (templateId || 'fine').toLowerCase().trim();
+  const apiTemplateKey = MEMEGEN_KEY_MAP[cleanTemplate] || cleanTemplate;
   const cleanTop = sanitizeForMemegen(topText);
   const cleanBottom = sanitizeForMemegen(bottomText);
-  return `https://api.memegen.link/images/${cleanTemplate}/${cleanTop}/${cleanBottom}.${extension}`;
+  return `https://api.memegen.link/images/${apiTemplateKey}/${cleanTop}/${cleanBottom}.${extension}`;
 }

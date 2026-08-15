@@ -291,15 +291,39 @@ export function heuristicMemePlanner(userMessage = '') {
 
 /**
  * Validates and normalizes planner JSON
+ * Returns null if the plan is missing required fields, empty captions, or invalid types.
  */
 export function validateAndNormalizePlan(rawJson) {
-  if (!rawJson || typeof rawJson !== 'object') {
+  if (!rawJson || typeof rawJson !== 'object' || Array.isArray(rawJson)) {
     return null;
   }
 
-  let template_id = String(rawJson.template_id || '').toLowerCase().trim();
+  // Must have template_id as a non-empty string
+  if (!rawJson.template_id || typeof rawJson.template_id !== 'string') {
+    return null;
+  }
+
+  // Must have top_text and bottom_text as non-empty strings
+  if (typeof rawJson.top_text !== 'string' || typeof rawJson.bottom_text !== 'string') {
+    return null;
+  }
+
+  const top_text = rawJson.top_text.trim();
+  const bottom_text = rawJson.bottom_text.trim();
+
+  // Empty captions are invalid
+  if (!top_text || !bottom_text || top_text === '_' && bottom_text === '_') {
+    return null;
+  }
+
+  // Limit max caption length
+  if (top_text.length > 120 || bottom_text.length > 120) {
+    return null;
+  }
+
+  let template_id = rawJson.template_id.toLowerCase().trim();
   if (!MEME_TEMPLATES[template_id]) {
-    // Map close synonyms or fallback
+    // Map close synonyms or fallback to default approved template
     if (template_id === 'distracted' || template_id === 'distracted-boyfriend') template_id = 'db';
     else if (template_id === 'change-my-mind') template_id = 'cmm';
     else if (template_id === 'buttons') template_id = 'two-buttons';
@@ -308,15 +332,15 @@ export function validateAndNormalizePlan(rawJson) {
     else template_id = DEFAULT_FALLBACK_TEMPLATE;
   }
 
-  const top_text = String(rawJson.top_text || '').slice(0, 100).trim();
-  const bottom_text = String(rawJson.bottom_text || '').slice(0, 100).trim();
-  const fallback_emoji = String(rawJson.fallback_emoji || DEFAULT_FALLBACK_EMOJI).trim();
+  const fallback_emoji = (typeof rawJson.fallback_emoji === 'string' && rawJson.fallback_emoji.trim())
+    ? rawJson.fallback_emoji.trim()
+    : DEFAULT_FALLBACK_EMOJI;
 
   return {
     template_id,
-    top_text: top_text || '_',
-    bottom_text: bottom_text || '_',
-    fallback_emoji: fallback_emoji || DEFAULT_FALLBACK_EMOJI
+    top_text,
+    bottom_text,
+    fallback_emoji
   };
 }
 
@@ -501,38 +525,47 @@ async function callLlmApi(userMessage) {
 /**
  * Main Meme Planning function
  * Strictly guarantees a valid visual response (image URL or emoji)
+ * NEVER exposes top/bottom captions, explanations, or error messages in public payload.
  */
 export async function planMemeResponse(userMessage = '') {
   try {
-    let rawPlan = null;
+    let validPlan = null;
 
-    // Try LLM API first if configured
+    // 1. Try LLM API first if configured
     try {
-      rawPlan = await callLlmApi(userMessage);
+      const rawLlmPlan = await callLlmApi(userMessage);
+      if (rawLlmPlan) {
+        validPlan = validateAndNormalizePlan(rawLlmPlan);
+        if (!validPlan) {
+          console.warn('[planMemeResponse] LLM returned invalid plan structure, falling back to heuristic planner');
+        }
+      }
     } catch (llmErr) {
-      console.warn('[planMemeResponse] LLM unavailable/failed, using comedy heuristic planner:', llmErr.message);
+      console.warn('[planMemeResponse] LLM call failed, using comedy heuristic planner:', llmErr.message);
     }
 
-    // Fallback to intelligent heuristic planner
-    if (!rawPlan) {
-      rawPlan = heuristicMemePlanner(userMessage);
-    }
-
-    // Normalize & validate strictly
-    const validPlan = validateAndNormalizePlan(rawPlan);
+    // 2. Fallback to intelligent heuristic planner if LLM was unavailable or invalid
     if (!validPlan) {
-      return { type: 'emoji', emoji: DEFAULT_FALLBACK_EMOJI };
+      const heuristicPlan = heuristicMemePlanner(userMessage);
+      validPlan = validateAndNormalizePlan(heuristicPlan);
     }
 
-    // Build Memegen URL
+    // 3. Absolute fail-safe if both somehow failed to produce a valid plan
+    if (!validPlan) {
+      return {
+        type: 'emoji',
+        emoji: DEFAULT_FALLBACK_EMOJI
+      };
+    }
+
+    // 4. Build Memegen URL
     const memeUrl = buildMemeUrl(validPlan.template_id, validPlan.top_text, validPlan.bottom_text);
 
+    // 5. PUBLIC PAYLOAD: STRICTLY VISUAL-ONLY (type, url, template - NO CAPTIONS)
     return {
       type: 'image',
       url: memeUrl,
-      template: validPlan.template_id,
-      top: validPlan.top_text,
-      bottom: validPlan.bottom_text
+      template: validPlan.template_id
     };
   } catch (err) {
     console.error('[planMemeResponse] Critical fail-safe triggered:', err.message);
